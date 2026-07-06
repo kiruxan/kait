@@ -1,0 +1,9 @@
+/* Styles for translation tooltip */
+/*
+ * Note: Tooltip styles are embedded in content.js using Shadow DOM
+ * for CSS isolation. This prevents page styles from affecting the tooltip
+ * and prevents tooltip styles from leaking to the page.
+ *
+ * This file can be used for any styles that need to be applied to
+ * elements outside the Shadow DOM (e.g., floating button trigger).
+ */

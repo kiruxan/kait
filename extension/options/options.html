@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Translator Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Text Translator Settings</h1>
+
+    <form id="settings-form">
+      <div class="form-group">
+        <label for="api-key">XAI API Key</label>
+        <input type="password" id="api-key" name="apiKey" placeholder="Enter your XAI API key">
+      </div>
+
+      <div class="form-group">
+        <label for="model">AI Model</label>
+        <select id="model" name="model">
+          <option value="grok-4-1-fast-non-reasoning">Grok 4.1 Fast (Non-reasoning)</option>
+          <option value="grok-4-1-fast-reasoning">Grok 4.1 Fast (Reasoning)</option>
+          <option value="grok-3-mini">Grok 3 Mini</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="target-language">Target Language</label>
+        <select id="target-language" name="targetLanguage">
+          <option value="English">English</option>
+          <option value="Spanish">Spanish</option>
+          <option value="French">French</option>
+          <option value="German">German</option>
+          <option value="Chinese">Chinese</option>
+          <option value="Japanese">Japanese</option>
+          <option value="Korean">Korean</option>
+          <option value="Russian">Russian</option>
+          <option value="Portuguese">Portuguese</option>
+          <option value="Italian">Italian</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="font-size">Popup Font Size</label>
+        <select id="font-size" name="fontSize">
+          <option value="12">Small (12px)</option>
+          <option value="14">Medium (14px)</option>
+          <option value="16">Large (16px)</option>
+          <option value="18">Extra Large (18px)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Trigger Mode</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="triggerMode" value="automatic" checked>
+            <span>Automatic</span>
+            <small>Translation appears automatically when you select text</small>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="triggerMode" value="button">
+            <span>Button click</span>
+            <small>A button appears after selection - click it to translate</small>
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="save-button">Save Settings</button>
+    </form>
+
+    <div id="status-message" class="status-message"></div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

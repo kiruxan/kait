@@ -1,0 +1,201 @@
+{
+  "project": "Chrome Translation Extension",
+  "branchName": "ralph/chrome-translation-extension",
+  "description": "Chrome browser extension that translates selected text using Grok XAI API with auto-detection of source language and configurable target language",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create extension manifest and project structure",
+      "description": "As a developer, I need the basic Chrome extension structure so the extension can be loaded in the browser.",
+      "acceptanceCriteria": [
+        "Create extension/ directory with manifest.json using Manifest V3 format",
+        "Configure permissions: activeTab, storage",
+        "Set up content_scripts to run on all URLs (<all_urls>)",
+        "Create placeholder files: content/content.js, content/content.css, background/service-worker.js",
+        "Create icon placeholders in icons/ directory (icon16.png, icon48.png, icon128.png)",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Create options page HTML and basic styling",
+      "description": "As a user, I want a settings page where I can configure the extension.",
+      "acceptanceCriteria": [
+        "Create options/options.html with form layout",
+        "Add input field for API key (type=password)",
+        "Add dropdown for target language with options: English, Spanish, French, German, Chinese, Japanese, Korean, Russian, Portuguese, Italian",
+        "Add radio buttons for trigger mode: Automatic vs Button click",
+        "Add Save button",
+        "Add basic CSS styling for clean appearance",
+        "Register options page in manifest.json",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Implement settings storage functionality",
+      "description": "As a user, I want my settings to be saved and persist across sessions.",
+      "acceptanceCriteria": [
+        "Create options/options.js to handle form submission",
+        "On save, store apiKey, targetLanguage, and triggerMode to chrome.storage.sync",
+        "On page load, retrieve and populate form with saved values",
+        "Default targetLanguage to 'English' if not set",
+        "Default triggerMode to 'automatic' if not set",
+        "Show success message after saving",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Create tooltip UI component with CSS isolation",
+      "description": "As a user, I want to see translations in a clean tooltip that doesn't conflict with page styles.",
+      "acceptanceCriteria": [
+        "Create tooltip element injection in content/content.js using Shadow DOM",
+        "Style tooltip in content/content.css with modern appearance (rounded corners, shadow, white background)",
+        "Tooltip should support displaying text content and loading state",
+        "Tooltip should support displaying error messages",
+        "Position tooltip function that keeps it within viewport bounds",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Implement text selection detection",
+      "description": "As a user, I want the extension to detect when I select text on any webpage.",
+      "acceptanceCriteria": [
+        "Add mouseup event listener in content/content.js",
+        "Capture selected text using window.getSelection()",
+        "Ignore empty selections or whitespace-only text",
+        "Store selection range for positioning tooltip near selection",
+        "Works for both single words and paragraphs",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Create XAI API translation service",
+      "description": "As a developer, I need a service to call the Grok XAI API for translations.",
+      "acceptanceCriteria": [
+        "Create background/service-worker.js with translation function",
+        "Function accepts: text, targetLanguage, apiKey parameters",
+        "Make POST request to https://api.x.ai/v1/chat/completions",
+        "Use prompt that instructs auto-detection of source language and returns only translated text",
+        "Parse response and return translated text",
+        "Handle and return appropriate errors (network, invalid key, rate limit)",
+        "Set request timeout to 30 seconds",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Implement message passing between content script and service worker",
+      "description": "As a developer, I need content script to communicate with background service worker for API calls.",
+      "acceptanceCriteria": [
+        "Content script sends message with action='translate', text, and targetLanguage",
+        "Service worker listens for messages and handles translate action",
+        "Service worker retrieves API key from chrome.storage.sync",
+        "Service worker returns translation result or error to content script",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Implement automatic translation mode",
+      "description": "As a user, I want translation popup to appear automatically when I select text.",
+      "acceptanceCriteria": [
+        "On text selection, check if triggerMode is 'automatic' from storage",
+        "If automatic, immediately show tooltip with loading indicator",
+        "Send translation request to service worker",
+        "Display translated text in tooltip when response received",
+        "Position tooltip near the selected text",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Implement floating button trigger mode",
+      "description": "As a user, I want a small button to appear after selection so I can choose when to translate.",
+      "acceptanceCriteria": [
+        "On text selection, check if triggerMode is 'button' from storage",
+        "If button mode, show small translate icon near selection end",
+        "Clicking button shows tooltip with loading indicator and triggers translation",
+        "Button disappears when clicking elsewhere on page",
+        "Button styled with translate icon and hover effect",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Implement tooltip dismissal behavior",
+      "description": "As a user, I want the tooltip to disappear when I click outside or make a new selection.",
+      "acceptanceCriteria": [
+        "Tooltip disappears when clicking outside of it",
+        "Tooltip disappears when making a new text selection",
+        "Floating button (if shown) disappears when clicking outside",
+        "Tooltip does not interfere with page scrolling",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Implement API key missing error handling",
+      "description": "As a user, I want clear feedback when the API key is not configured.",
+      "acceptanceCriteria": [
+        "Before making API call, check if API key exists in storage",
+        "If missing, show error in tooltip: 'API key not configured'",
+        "Include clickable link/button in tooltip to open extension settings",
+        "Do not make API call if key is missing",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Implement API error handling in tooltip",
+      "description": "As a user, I want to see helpful error messages when translation fails.",
+      "acceptanceCriteria": [
+        "Display 'Network error. Please check your connection.' for network failures",
+        "Display 'Invalid API key. Please check settings.' for 401 errors",
+        "Display 'Too many requests. Please wait a moment.' for 429 errors",
+        "Display generic error message for other failures",
+        "Error messages styled distinctly (e.g., red text or error icon)",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": ""
+    }
+  ]
+}

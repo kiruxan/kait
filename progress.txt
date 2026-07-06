@@ -1,0 +1,251 @@
+## Codebase Patterns
+- This is a Chrome Extension using Manifest V3
+- Extension structure: extension/ directory with content/, background/, icons/, options/ subdirectories
+- Content scripts in content/content.js and content/content.css
+- Service worker in background/service-worker.js
+- No TypeScript or build system - plain JavaScript
+
+---
+
+## 2026-01-31 - US-001
+- What was implemented:
+  - Created extension/ directory structure
+  - Created manifest.json with Manifest V3 format
+  - Configured permissions: activeTab, storage
+  - Set up content_scripts to run on all URLs
+  - Created placeholder files: content/content.js, content/content.css, background/service-worker.js
+  - Created icon placeholders in icons/ directory (icon16.png, icon48.png, icon128.png)
+- Files changed:
+  - extension/manifest.json (new)
+  - extension/content/content.js (new)
+  - extension/content/content.css (new)
+  - extension/background/service-worker.js (new)
+  - extension/icons/icon16.png, icon48.png, icon128.png (new)
+- **Learnings for future iterations:**
+  - No TypeScript or linting setup in this project - "typecheck passes" is trivially true
+  - Manifest V3 uses "service_worker" not "background.scripts"
+  - Icons are placeholder PNGs - would need real icons for production
+---
+
+## 2026-01-31 - US-002
+- What was implemented:
+  - Created options/options.html with complete form layout
+  - Added password input field for XAI API key
+  - Added target language dropdown with 10 language options (English, Spanish, French, German, Chinese, Japanese, Korean, Russian, Portuguese, Italian)
+  - Added radio buttons for trigger mode (Automatic vs Button click) with descriptions
+  - Added styled Save button
+  - Created options.css with modern, clean styling (rounded corners, shadows, hover effects)
+  - Created placeholder options.js for future functionality
+  - Registered options_page in manifest.json
+- Files changed:
+  - extension/options/options.html (new)
+  - extension/options/options.css (new)
+  - extension/options/options.js (new - placeholder)
+  - extension/manifest.json (modified - added options_page)
+- **Learnings for future iterations:**
+  - Use "options_page" in manifest.json for Manifest V3 options pages
+  - Radio buttons with descriptions look cleaner when wrapped in a styled container with padding
+  - The placeholder options.js is referenced in HTML - US-003 will implement the actual functionality
+---
+
+## 2026-01-31 - US-003
+- What was implemented:
+  - Created full options.js functionality to handle form submission
+  - Load saved settings from chrome.storage.sync on page load and populate form
+  - Save apiKey, targetLanguage, and triggerMode to chrome.storage.sync on form submit
+  - Default values: targetLanguage='English', triggerMode='automatic'
+  - Show success message that auto-hides after 3 seconds
+  - Error handling for chrome.runtime.lastError
+- Files changed:
+  - extension/options/options.js (modified - replaced placeholder with full implementation)
+- **Learnings for future iterations:**
+  - chrome.storage.sync.get() accepts default values as first parameter for clean fallback handling
+  - Use DOMContentLoaded event to load settings when page is ready
+  - The status-message div already exists in HTML with CSS classes 'success' and 'error' for styling
+---
+
+## 2026-01-31 - US-004
+- What was implemented:
+  - Created tooltip UI component using Shadow DOM for CSS isolation
+  - Implemented createTooltipHost() that attaches a closed shadow root with embedded styles
+  - Added showTooltipText(content) to display translated text with HTML escaping
+  - Added showTooltipLoading() with animated spinner for loading state
+  - Added showTooltipError(message, showSettingsLink) for error display with optional settings link
+  - Added hideTooltip() to dismiss the tooltip
+  - Implemented positionTooltip(x, y) to keep tooltip within viewport bounds
+  - Styled tooltip with modern appearance: white background, rounded corners, shadow, smooth transitions
+  - Error state uses red color (#d93025) with error icon SVG
+  - Exposed functions via window.kaitTooltip for use by other content script code
+- Files changed:
+  - extension/content/content.js (modified - added full tooltip implementation)
+  - extension/content/content.css (modified - added comment explaining Shadow DOM usage)
+- **Learnings for future iterations:**
+  - Use Shadow DOM with mode: 'closed' for complete CSS isolation from page styles
+  - z-index: 2147483647 (max 32-bit int) ensures tooltip appears above all page content
+  - Expose tooltip functions via window.kaitTooltip object for inter-module communication
+  - Position tooltip using fixed positioning and measure dimensions before final placement
+  - Always escape user content with textContent/innerHTML pattern to prevent XSS
+---
+
+## 2026-01-31 - US-005
+- What was implemented:
+  - Added text selection detection functionality in content/content.js
+  - Created mouseup event listener to detect when user finishes selecting text
+  - Implemented getSelectedText() using window.getSelection() to capture selected text
+  - Added isValidSelection() to filter out empty/whitespace-only selections
+  - Implemented getSelectionPosition() to get coordinates at the end of selection for tooltip positioning
+  - Created storeSelectionRange() to clone and store the selection range for later use
+  - Dispatches 'kait-text-selected' custom event with selection details for other modules
+  - Exposed selection functions via window.kaitSelection object for inter-module communication
+- Files changed:
+  - extension/content/content.js (modified - added text selection detection section)
+- **Learnings for future iterations:**
+  - Use setTimeout with small delay (10ms) in mouseup handler to ensure selection is complete
+  - Clone ranges with getRangeAt(0).cloneRange() since original range may be modified
+  - Use getBoundingClientRect() on the range to get selection position in viewport coordinates
+  - CustomEvent with detail object is a clean way to communicate between modules in content script
+  - window.kaitSelection complements window.kaitTooltip for content script module organization
+---
+
+## 2026-01-31 - US-006
+- What was implemented:
+  - Created translateText() function in background/service-worker.js
+  - Function accepts text, targetLanguage, and apiKey parameters
+  - Makes POST request to https://api.x.ai/v1/chat/completions using grok-2-latest model
+  - Uses prompt that auto-detects source language and returns only translated text
+  - Parses response and returns translated text via {success, translation} object
+  - Handles errors: 401 (invalid key), 429 (rate limit), network errors, timeout
+  - Uses AbortController with 30 second timeout (REQUEST_TIMEOUT_MS = 30000)
+  - Returns consistent response shape: {success: boolean, translation?: string, error?: string}
+  - Exposes translateText via self.translateText for use by message handlers
+- Files changed:
+  - extension/background/service-worker.js (modified - added full translation service implementation)
+- **Learnings for future iterations:**
+  - Use AbortController with setTimeout for request timeouts in service workers
+  - XAI API endpoint: https://api.x.ai/v1/chat/completions
+  - XAI API uses standard OpenAI-style messages format with model, messages, temperature
+  - Model to use: 'grok-2-latest' for translations
+  - Temperature 0.3 works well for translation tasks (deterministic but not rigid)
+  - Export functions in service worker using self.functionName for global scope
+  - Always clear timeout in both success and catch paths to prevent memory leaks
+---
+
+## 2026-01-31 - US-007
+- What was implemented:
+  - Added message handling in service-worker.js with chrome.runtime.onMessage.addListener
+  - handleMessage() dispatches based on message.action ('translate' or 'openSettings')
+  - handleTranslateRequest() retrieves API key from chrome.storage.sync, calls translateText()
+  - Returns {success, translation} or {success, error} response to content script
+  - Added requestTranslation() function in content.js to send messages to service worker
+  - Uses chrome.runtime.sendMessage() with Promise wrapper for async handling
+  - Exposed via window.kaitMessaging.translate() for use by other modules
+  - Added 'openSettings' action handler to open extension options page
+- Files changed:
+  - extension/background/service-worker.js (modified - added message handling section)
+  - extension/content/content.js (modified - added message passing section)
+- **Learnings for future iterations:**
+  - Return `true` from onMessage handler to indicate async response will be sent
+  - Use Promise wrapper around chrome.runtime.sendMessage for cleaner async/await usage
+  - Check chrome.runtime.lastError in sendMessage callback for error handling
+  - window.kaitMessaging complements window.kaitTooltip and window.kaitSelection
+  - chrome.runtime.openOptionsPage() opens the extension's options page from service worker
+---
+
+## 2026-01-31 - US-008
+- What was implemented:
+  - Added automatic translation mode in content/content.js
+  - Created getSettings() function to retrieve apiKey, targetLanguage, and triggerMode from chrome.storage.sync
+  - Implemented handleAutoTranslation() that listens for 'kait-text-selected' events
+  - Checks if triggerMode is 'automatic' before proceeding with translation
+  - Shows loading indicator immediately when text is selected in automatic mode
+  - Positions tooltip near the selected text
+  - Sends translation request to service worker and displays result
+  - Displays error message if translation fails
+  - Exposed functions via window.kaitAutoTranslate for inter-module communication
+- Files changed:
+  - extension/content/content.js (modified - added automatic translation mode section)
+- **Learnings for future iterations:**
+  - Reuse existing getSettings() pattern for Promise-based chrome.storage.sync access
+  - The 'kait-text-selected' custom event dispatched by selection detection is the integration point
+  - All tooltip/messaging/selection modules are composed together in the automatic translation handler
+  - window.kaitAutoTranslate complements existing window.kait* namespace modules
+---
+
+## 2026-01-31 - US-009
+- What was implemented:
+  - Added floating translate button trigger mode in content/content.js
+  - Created translateButton element with Shadow DOM styling (circular blue button with translate icon)
+  - Added showTranslateButton(), hideTranslateButton(), positionTranslateButton() functions
+  - Implemented handleButtonTriggerMode() that listens for 'kait-text-selected' events when triggerMode is 'button'
+  - Button appears near selection end with hover effects and smooth transitions
+  - Clicking button dispatches 'kait-translate-button-click' custom event
+  - handleTranslateButtonClick() hides button, shows loading tooltip, sends translation request
+  - handleOutsideClick() dismisses button when clicking elsewhere on page (mousedown listener)
+  - Stores pendingButtonSelection object with text, position, and targetLanguage for use when clicked
+  - Exposed functions via window.kaitButtonMode for inter-module communication
+- Files changed:
+  - extension/content/content.js (modified - added button trigger mode section and button styles)
+- **Learnings for future iterations:**
+  - Use CustomEvent to bridge between Shadow DOM click handlers and module-level functions
+  - Store selection data in a pendingButtonSelection object since the selection may be lost by the time button is clicked
+  - Use mousedown instead of click for outside dismissal to catch interaction earlier
+  - Button positioning: place to the right of and slightly above selection end, with edge detection
+  - window.kaitButtonMode complements existing window.kait* namespace modules
+---
+
+## 2026-01-31 - US-010
+- What was implemented:
+  - Added tooltip dismissal behavior in content/content.js
+  - Created handleTooltipOutsideClick() to dismiss tooltip when clicking outside
+  - Created handleDismissOnNewSelection() to dismiss tooltip when new text is selected
+  - Used capture phase event listener for new selection to ensure tooltip hides before translation handlers run
+  - Added handleScroll() to dismiss both tooltip and floating button on page scroll
+  - Scroll listener uses passive: true for better scroll performance
+  - Exposed functions via window.kaitDismissal for inter-module communication
+- Files changed:
+  - extension/content/content.js (modified - added tooltip dismissal behavior section)
+- **Learnings for future iterations:**
+  - Use capture phase (third arg `true`) for event listeners that need to run before other handlers
+  - Use passive: true for scroll listeners to improve scroll performance
+  - Fixed position elements should be dismissed on scroll since they won't follow the selection
+  - Click events are better than mousedown for dismissing UI after interactions complete
+---
+
+## 2026-01-31 - US-011
+- What was implemented:
+  - Added API key missing error handling in content/content.js
+  - Created isApiKeyMissingError() helper function to detect API key errors
+  - Modified handleAutoTranslation() to check API key before making request
+  - Modified handleTranslateButtonClick() to check API key before making request
+  - Both handlers now show 'API key not configured' error with settings link if key is missing
+  - No API call is made when API key is missing (early return after error display)
+  - Error handling also catches API key errors from service worker response and shows settings link
+  - Exported isApiKeyMissingError() via window.kaitAutoTranslate
+- Files changed:
+  - extension/content/content.js (modified - added API key validation before translation requests)
+- **Learnings for future iterations:**
+  - showTooltipError() already supports showSettingsLink parameter (implemented in US-004)
+  - getSettings() returns apiKey from storage, can be checked directly before making request
+  - Service worker also validates API key, so handle errors from both client-side check and server response
+---
+
+## 2026-01-31 - US-012
+- What was implemented:
+  - Enhanced API error handling to show settings link for invalid API key (401) errors
+  - Renamed isApiKeyMissingError() to isApiKeyError() to handle both missing and invalid key scenarios
+  - Updated generic error message from 'API error (status)' to 'Translation failed. Please try again.'
+  - All error messages match acceptance criteria exactly:
+    - Network errors: 'Network error. Please check your connection.'
+    - 401 errors: 'Invalid API key. Please check settings.'
+    - 429 errors: 'Too many requests. Please wait a moment.'
+    - Other errors: 'Translation failed. Please try again.'
+  - Error styling was already implemented in US-004 (red #d93025 text + error icon SVG)
+- Files changed:
+  - extension/content/content.js (modified - renamed isApiKeyMissingError to isApiKeyError, expanded detection logic)
+  - extension/background/service-worker.js (modified - changed generic error message)
+  - prd.json (modified - marked US-010, US-011, US-012 as passes: true)
+- **Learnings for future iterations:**
+  - The error handling for 401, 429, and network errors was already implemented in US-006
+  - US-012 is primarily about ensuring correct error message wording and that settings link appears for both missing AND invalid API key
+  - Always verify existing functionality before adding new code - much of US-012 was already complete from earlier stories
+---
